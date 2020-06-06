@@ -40,6 +40,24 @@ class App extends Component {
       }
     }
   }
+
+  calculateFaceLocation = (data) => {
+    const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
+    const image = document.getElementById('inputimage');
+    const width = Number(image.width);
+    const height = Number(image.height);
+    return {
+      leftCol: clarifaiFace.left_col * width,
+      topRow: clarifaiFace.top_row * height,
+      rightCol: width - (clarifaiFace.right_col * width),
+      bottomRow: height - (clarifaiFace.bottom_row * height)
+    }
+  }
+
+  displayFaceBox = (box) => {
+    this.setState({box: box});
+  }
+  
   onInputChange = (event) => {
     this.setState({input: event.target.value}, () => console.log(this.state.input));
   }
@@ -50,13 +68,13 @@ class App extends Component {
 
     console.log(this.state.imageUrl);
     app.models.predict(
-Clarifai.COLOR_MODEL,
+Clarifai.FACE_DETECT_MODEL,
     // URL
-    "https://samples.clarifai.com/metro-north.jpg"
+   this.state.input
 )
-.then(function(response) {
-console.log(response);
-    });
+.then(response=> this.displayFaceBox(
+this.calculateFaceLocation(response))
+).catch(err=>console.log(err));
   }
 
   render() {
@@ -71,7 +89,7 @@ console.log(response);
       <Logo></Logo>
       <Rank></Rank>
       <ImageForm onInputChange={this.onInputChange} onButtonSubmit={this.onButtonSubmit}  ></ImageForm>
-      <FaceRecognition imageUrl={imageUrl}></FaceRecognition>
+      <FaceRecognition box={box} imageUrl={imageUrl}></FaceRecognition>
   </div>
     );
   }
